@@ -1,0 +1,7 @@
+{
+    "uuid": "smhi-weather@cinnamon.org",
+    "name": "Show weather from SMHI",
+    "description": "Show current weather from SMHI, and forecasts.",
+    "icon": "smhi-weather",
+    "max-instances": "-1"
+}

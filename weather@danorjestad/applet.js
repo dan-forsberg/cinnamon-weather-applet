@@ -113,6 +113,16 @@ Weather.prototype = {
     /* ---- */
 
     /**
+     * Get a forecast for this very hour.
+     */
+    weatherNow: function() {
+        if (!this._data)
+            this._getData();
+
+        return _parse_single(this._data.timeSeries[0]);
+    },
+
+    /**
      * Parses a single object from _data.timeSeries into a Forecast object
      */
     _parse_single: function(obj) {

@@ -112,7 +112,7 @@ Weather.prototype = {
         });
     },
 
-    /* ---- */
+    /* -------- */
 
     /**
      * Get a forecast for this very hour.
@@ -122,6 +122,24 @@ Weather.prototype = {
             this._getData();
 
         return this._parse_single(this._data.timeSeries[0]);
+    },
+
+    /**
+     * Get forecasts for no_forecasts hours ahead.
+     * Return an array of forecast objects
+     */
+    getForecasts: function(no_forecasts) {
+        if (!no_forecasts || no_forecasts < 0 || no_forecasts > 48)
+            no_forecasts = 12;
+
+        if (!this._data)
+            this._getData();
+
+	let forecasts = [];
+        for (let i = 0; i < no_forecasts; i++)
+	    forecasts.push(this._parse_single(this._data.timeSeries[i]));
+
+	return forecasts;
     },
 
     /**

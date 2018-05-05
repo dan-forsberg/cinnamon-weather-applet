@@ -183,5 +183,14 @@ Weather.prototype = {
         }
 
         return forecast;
+    },
+
+    real_feel: function(temp, wind) {
+	if (temp > 10 || wind < 1.4)
+	    return temp;
+
+	let w16 = wind ** 0.16;
+	return(13.12667 + (0.6215 * temp) - 13.924748 * (w16) +
+	       0.4875195 * temp * w16);
     }
 };

@@ -1,7 +1,6 @@
 {
-    "uuid": "smhi-weather@cinnamon.org",
-    "name": "Show weather from SMHI",
-    "description": "Show current weather from SMHI, and forecasts.",
-    "icon": "smhi-weather",
+    "uuid": "weather@danorjestad",
+    "name": "Show weather from the Swedish SMHI",
+    "description": "Show weather and forecasts from SMHI.",
     "max-instances": "-1"
 }

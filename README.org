@@ -1,0 +1,10 @@
+This is a basic applet that uses data from SMHI's public API to show the current
+weather, and forecasts.
+
+This was made for Cinnamon, but probably works on GNOME too.
+
+** Installation/usage
+Clone and put in `~/.local/share/cinnamon/applets/` and enable
+
+There are some variables which can be changed, such as the coordinates, and the
+refresh rate, and how many forecasts to show. All that is available in the code.

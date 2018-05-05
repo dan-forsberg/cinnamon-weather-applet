@@ -1,6 +1,7 @@
 const Applet = imports.ui.applet;
 const Soup = imports.gi.Soup;
 const glib = imports.gi.GLib;
+const PopupMenu = imports.ui.popupMenu;
 
 const _session = new Soup.SessionSync();
 
@@ -47,6 +48,12 @@ Weather.prototype = {
     _init: function(orientation, panel_height, instance_id) {
         Applet.TextIconApplet.prototype._init.call(this, orientation,
             panel_height, instance_id);
+
+
+        this.menuManager = new PopupMenu.PopupMenuManager(this);
+        this.menu = new Applet.AppletPopupMenu(this, orientation);
+        this.menuManager.addMenu(this.menu);
+
         this.set_applet_tooltip(_("Weather now - click for forecasts"));
         this.set_applet_label(_("Loading..."));
         this._get_data();
@@ -58,8 +65,26 @@ Weather.prototype = {
 
         let now = this.weather_now();
         /* Set label to show current temp, wind, cloudiness, and rain if it rains */
-        this.set_applet_label(now.temp + "°c " + now.ws + "m/s " + now.cloudiness + "/8" +
-            (now.rain > 0 ? " " + now.rain + "mm" : ""));
+        this.set_applet_label(this.real_feel(now.temp, now.ws) + "°c " + now.ws + "m/s " +
+            now.cloudiness + "/8" + (now.rain > 0 ? " " + now.rain + "mm" : ""));
+
+        /* populate menu */
+        this.get_forecasts().forEach((forecast) => {
+            let text = forecast.valid_time + " - " + this.real_feel(forecast.temp, forecast.ws) + "°c " +
+		forecast.ws + "m/s " + forecast.cloudiness + "/8" +
+		(forecast.rain > 0 ? " " + forecast.rain + "mm" : "");
+            this._add_text_item(text);
+        });
+    },
+
+    _add_text_item: function(text) {
+        this.menu.addMenuItem(new PopupMenu.PopupMenuItem(text, {
+            reactive: false
+        }));
+    },
+
+    on_applet_clicked: function(event) {
+        this.menu.toggle();
     },
 
     /**
@@ -80,6 +105,8 @@ Weather.prototype = {
     _get_data: function() {
         let url = this._baseURL + this._lon + "/lat/" + this._lat + "/data.json";
         let msg = Soup.Message.new('GET', url);
+
+	global.log("URL = " + url);
 
         if (!msg)
             new Error("msg null in _getData");
@@ -132,11 +159,11 @@ Weather.prototype = {
         if (!this._data)
             this._get_data();
 
-	let forecasts = [];
+        let forecasts = [];
         for (let i = 0; i < this._no_forecasts; i++)
-	    forecasts.push(this._parse_single(this._data.timeSeries[i]));
+            forecasts.push(this._parse_single(this._data.timeSeries[i]));
 
-	return forecasts;
+        return forecasts;
     },
 
     /**
@@ -144,7 +171,9 @@ Weather.prototype = {
      */
     _parse_single: function(obj) {
         let forecast = new_forecast();
-        forecast.valid_time = obj.validTime;
+        let date = new Date(obj.validTime);
+
+	forecast.valid_time = date.getHours() + ":00";
 
         let i = 0;
         let param = obj.parameters[i];
@@ -186,11 +215,11 @@ Weather.prototype = {
     },
 
     real_feel: function(temp, wind) {
-	if (temp > 10 || wind < 1.4)
-	    return temp;
+        if (temp > 10 || wind < 1.4)
+            return temp;
 
-	let w16 = wind ** 0.16;
-	return(13.12667 + (0.6215 * temp) - 13.924748 * (w16) +
-	       0.4875195 * temp * w16);
+        let w16 = wind ** 0.16;
+        return (13.12667 + (0.6215 * temp) - 13.924748 * (w16) +
+		0.4875195 * temp * w16).toFixed(1);
     }
 };

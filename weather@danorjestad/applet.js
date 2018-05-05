@@ -1,10 +1,26 @@
 const Applet = imports.ui.applet;
 const Soup = imports.gi.Soup;
+const glib = imports.gi.GLib;
 
 const _session = new Soup.SessionSync();
 
 function main(metadata, orientation, panel_height, instance_id) {
     return new Weather(orientation, panel_height, instance_id);
+}
+
+/* Object to represent the forecast for a specific time (period) */
+function new_forecast() {
+    return {
+        valid_time: null,
+        temp: null,
+        vis: null,
+        ws: null,
+        rain: null,
+        rel_hum: null,
+        thunder_prob: null,
+        wsymb: null,
+        cloudiness: null
+    };
 }
 
 function Weather(orientation, panel_height, instance_id) {
@@ -16,10 +32,14 @@ Weather.prototype = {
      * full URL is constructed in #_getData() and #updateData() */
     _baseURL: "https://opendata-download-metfcst.smhi.se/api/category/pmp3g/" +
         "version/2/geotype/point/lon/",
+    /* Default coordinates point to Umeå */
     _lon: 20.307247,
     _lat: 63.838241,
-    /* Default coordinates point to Umeå */
-    
+    /* how often should updateData run (in minutes) */
+    _refreshRate: 15,
+    /* how many forecasts should show in the popup */
+    _noForecasts: 12,
+
     _data: null,
 
     __proto__: Applet.TextIconApplet.prototype,
@@ -32,14 +52,20 @@ Weather.prototype = {
         this.set_applet_label(_("Loading..."));
         this._getData();
 
+        glib.timeout_add(glib.PRIORITY_DEFAULT, this._refreshRate * 60, () => {
+            this.updateData();
+            return true; /* repeat */
+        }, null);
+
+        this.weatherNow();
     },
 
     /**
      * Set the latitute and longitude to another loc than hard-coded defaults
      */
     setLoc: function(lat, lon) {
-        this.lat = lat;
-        this.lon = lon;
+        this._lat = lat;
+        this._lon = lon;
     },
 
     /**
@@ -62,8 +88,7 @@ Weather.prototype = {
         if (!msg.response_body || !msg.response_body.data)
             new Error("Response or data is null.");
 
-        global.log(url);
-
+        this._data = JSON.parse(msg.response_body.data);
     },
 
     /**
@@ -74,15 +99,63 @@ Weather.prototype = {
      * not handled.
      */
     updateData: function() {
-        let url = this._baseURL + lon + "/lat/" + lat + "/data.json";
+        let url = this._baseURL + this._lon + "/lat/" + this._lat + "/data.json";
         let msg = Soup.Message.new('GET', url);
 
         if (!msg)
             new Error("msg null in updateData");
 
         _session.queue_message(msg, (sess, msg) => {
-            _data = msg.response_body.data;
+            this._data = JSON.parse(msg.response_body.data);
         });
+    },
+
+    /* ---- */
+
+    /**
+     * Parses a single object from _data.timeSeries into a Forecast object
+     */
+    _parse_single: function(obj) {
+        let forecast = new_forecast();
+        forecast.valid_time = new Date(obj.valid_time);
+
+        let i = 0;
+        let param = obj.parameters[i];
+        while (param[i]) {
+            let val = param[i].values[0];
+
+            switch (param.name) {
+                case "t":
+                    forecast.temp = val;
+                    break;
+                case "vis":
+                    forecast.vis = val;
+                    break;
+                case "ws":
+                    forecast.ws = val;
+                    break;
+                case "r":
+                    forecast.rel_hum = val;
+                    break;
+                case "tstm":
+                    forecast.thunder_prob = val;
+                    break;
+                case "tcc_mean":
+                    forecast.cloudiness = val;
+                    break;
+                case "Wsymb2":
+                    forecast.wsymb = val;
+                    break;
+                case "pmedian":
+                    forecast.rain = val;
+                    break;
+                default:
+                    break;
+            }
+            i++;
+        }
+
+        return forecast;
     },
 
     a: function() {}

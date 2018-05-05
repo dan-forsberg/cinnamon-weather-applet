@@ -47,8 +47,7 @@ Weather.prototype = {
     _init: function(orientation, panel_height, instance_id) {
         Applet.TextIconApplet.prototype._init.call(this, orientation,
             panel_height, instance_id);
-        //this.set_applet_icon_symbolic_name("weather-sun");
-        this.set_applet_tooltip(_("Weather"));
+        this.set_applet_tooltip(_("Weather now - click for forecasts"));
         this.set_applet_label(_("Loading..."));
         this._getData();
 
@@ -58,8 +57,9 @@ Weather.prototype = {
         }, null);
 
         let now = this.weatherNow();
-        //global.log(now);
-        this.set_applet_label(now.temp + "°c");
+        /* Set label to show current temp, wind, cloudiness, and rain if it rains */
+        this.set_applet_label(now.temp + "°c " + now.ws + "m/s " + now.cloudiness + "/8" +
+            (now.rain > 0 ? " " + now.rain + "mm" : ""));
     },
 
     /**

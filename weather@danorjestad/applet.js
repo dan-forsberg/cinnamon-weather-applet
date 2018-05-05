@@ -57,7 +57,9 @@ Weather.prototype = {
             return true; /* repeat */
         }, null);
 
-        this.weatherNow();
+        let now = this.weatherNow();
+        //global.log(now);
+        this.set_applet_label(now.temp + "°c");
     },
 
     /**
@@ -119,7 +121,7 @@ Weather.prototype = {
         if (!this._data)
             this._getData();
 
-        return _parse_single(this._data.timeSeries[0]);
+        return this._parse_single(this._data.timeSeries[0]);
     },
 
     /**
@@ -127,12 +129,12 @@ Weather.prototype = {
      */
     _parse_single: function(obj) {
         let forecast = new_forecast();
-        forecast.valid_time = new Date(obj.valid_time);
+        forecast.valid_time = obj.validTime;
 
         let i = 0;
         let param = obj.parameters[i];
-        while (param[i]) {
-            let val = param[i].values[0];
+        while (param != null) {
+            let val = param.values[0];
 
             switch (param.name) {
                 case "t":
@@ -162,11 +164,9 @@ Weather.prototype = {
                 default:
                     break;
             }
-            i++;
+            param = obj.parameters[++i];
         }
 
         return forecast;
-    },
-
-    a: function() {}
+    }
 };

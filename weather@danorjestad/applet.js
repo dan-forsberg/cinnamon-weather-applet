@@ -36,9 +36,9 @@ Weather.prototype = {
     _lon: 20.307247,
     _lat: 63.838241,
     /* how often should updateData run (in minutes) */
-    _refreshRate: 15,
+    _refresh_rate: 15,
     /* how many forecasts should show in the popup */
-    _noForecasts: 12,
+    _no_forecasts: 12,
 
     _data: null,
 
@@ -49,14 +49,14 @@ Weather.prototype = {
             panel_height, instance_id);
         this.set_applet_tooltip(_("Weather now - click for forecasts"));
         this.set_applet_label(_("Loading..."));
-        this._getData();
+        this._get_data();
 
-        glib.timeout_add(glib.PRIORITY_DEFAULT, this._refreshRate * 60, () => {
-            this.updateData();
+        glib.timeout_add(glib.PRIORITY_DEFAULT, this._refresh_rate * 60, () => {
+            this.update_data();
             return true; /* repeat */
         }, null);
 
-        let now = this.weatherNow();
+        let now = this.weather_now();
         /* Set label to show current temp, wind, cloudiness, and rain if it rains */
         this.set_applet_label(now.temp + "°c " + now.ws + "m/s " + now.cloudiness + "/8" +
             (now.rain > 0 ? " " + now.rain + "mm" : ""));
@@ -65,7 +65,7 @@ Weather.prototype = {
     /**
      * Set the latitute and longitude to another loc than hard-coded defaults
      */
-    setLoc: function(lat, lon) {
+    set_loc: function(lat, lon) {
         this._lat = lat;
         this._lon = lon;
     },
@@ -77,7 +77,7 @@ Weather.prototype = {
      * In case of an error or unexpected result, an Error is thrown but
      * not handled.
      */
-    _getData: function() {
+    _get_data: function() {
         let url = this._baseURL + this._lon + "/lat/" + this._lat + "/data.json";
         let msg = Soup.Message.new('GET', url);
 
@@ -100,7 +100,7 @@ Weather.prototype = {
      * In case of an error or unexpected result, an Error is thrown but 
      * not handled.
      */
-    updateData: function() {
+    update_data: function() {
         let url = this._baseURL + this._lon + "/lat/" + this._lat + "/data.json";
         let msg = Soup.Message.new('GET', url);
 
@@ -117,9 +117,9 @@ Weather.prototype = {
     /**
      * Get a forecast for this very hour.
      */
-    weatherNow: function() {
+    weather_now: function() {
         if (!this._data)
-            this._getData();
+            this._get_data();
 
         return this._parse_single(this._data.timeSeries[0]);
     },
@@ -128,12 +128,12 @@ Weather.prototype = {
      * Get forecasts for no_forecasts hours ahead.
      * Return an array of forecast objects
      */
-    getForecasts: function() {
+    get_forecasts: function() {
         if (!this._data)
-            this._getData();
+            this._get_data();
 
 	let forecasts = [];
-        for (let i = 0; i < this._noForecasts; i++)
+        for (let i = 0; i < this._no_forecasts; i++)
 	    forecasts.push(this._parse_single(this._data.timeSeries[i]));
 
 	return forecasts;
